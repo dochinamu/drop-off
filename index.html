@@ -1,0 +1,733 @@
+<!--#strip-begin-->
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--#strip-end-->
+<title>Drop-Off</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a findings report. A row of headline numbers, then one chart per
+   question, each with the question as its heading and the answer beneath it.
+   Colour is reserved for data; one warm hue carries every measure. */
+:root{
+  --bg:#F4F4F6; --surface:#FCFCFD; --surface-2:#EAEAEE; --surface-3:#DEDEE4;
+  --ink:#16161A; --ink-2:#4A4A54; --muted:#78788400;
+  --muted:#787884; --line:#DBDBE1; --line-2:#C6C6CF;
+  --accent:#C25C2A; --accent-2:#8E3A1B;
+  --h1:#F7D9B0; --h2:#EFB168; --h3:#E08641; --h4:#C25C2A; --h5:#8E3A1B;
+  --font-display:"Newsreader",Georgia,"Times New Roman",serif;
+  --font-body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",
+              "Segoe UI","Malgun Gothic",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,
+              "Apple SD Gothic Neo","Malgun Gothic",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101014; --surface:#191920; --surface-2:#21212A; --surface-3:#2A2A34;
+    --ink:#EEEEF3; --ink-2:#B4B4C0; --muted:#86868F;
+    --line:#2A2A33; --line-2:#383843;
+    --accent:#D08A4A; --accent-2:#EFB877;
+    --h1:#4A2A17; --h2:#7A4423; --h3:#A86134; --h4:#D08A4A; --h5:#EFB877;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101014; --surface:#191920; --surface-2:#21212A; --surface-3:#2A2A34;
+  --ink:#EEEEF3; --ink-2:#B4B4C0; --muted:#86868F;
+  --line:#2A2A33; --line-2:#383843;
+  --accent:#D08A4A; --accent-2:#EFB877;
+  --h1:#4A2A17; --h2:#7A4423; --h3:#A86134; --h4:#D08A4A; --h5:#EFB877;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding-inline:18px;padding-block:32px 60px;
+  display:flex;flex-direction:column;gap:20px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+header{display:flex;flex-direction:column;gap:11px}
+h1{font-family:var(--font-display);font-weight:600;margin:0;
+  font-size:clamp(34px,6.5vw,52px);line-height:1;letter-spacing:-.015em}
+.lede{margin:0;max-width:62ch;color:var(--ink-2);font-size:15.5px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:11px}
+.card-hd{padding:16px 18px 0}
+.card-hd h2{margin:0;font-family:var(--font-display);font-size:19px;font-weight:600;
+  letter-spacing:-.01em;line-height:1.25}
+.finding{margin:7px 0 0;font-size:13.5px;color:var(--ink-2);max-width:68ch}
+.finding b{color:var(--ink);font-weight:600}
+
+/* intake */
+.intake{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  padding:16px 18px;border:1px dashed var(--line-2);border-radius:11px;background:var(--surface)}
+.intake.dragover{border-color:var(--accent);background:var(--surface-2)}
+.intake p{margin:0;font-size:13.5px;color:var(--ink-2);max-width:54ch;min-width:0}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+button.b{appearance:none;cursor:pointer;font-family:var(--font-body);font-size:12.5px;
+  font-weight:600;padding:8px 13px;border-radius:7px;border:1px solid var(--line-2);
+  background:var(--surface);color:var(--ink)}
+button.b:hover{border-color:var(--accent)}
+button.b.primary{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+button.b.primary:hover{opacity:.86}
+.badge{font-family:var(--font-mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);
+  border-radius:999px;padding:2px 9px}
+
+/* stat row */
+.stats{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);
+  border-radius:11px;overflow:hidden;grid-template-columns:repeat(auto-fit,minmax(142px,1fr))}
+.stat{background:var(--surface);padding:14px 16px;min-width:0}
+.stat .k{font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.stat .v{font-family:var(--font-display);font-size:27px;font-weight:600;line-height:1.05;
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v small{font-family:var(--font-body);font-size:13px;font-weight:400;color:var(--muted);
+  margin-left:3px;letter-spacing:0}
+
+.plot{position:relative;padding:12px 18px 16px}
+.plot svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;z-index:6;opacity:0;transition:opacity .1s;
+  background:var(--ink);color:var(--bg);border-radius:7px;padding:7px 10px;
+  font-family:var(--font-mono);font-size:10.5px;line-height:1.55;white-space:nowrap;
+  transform:translate(-50%,-118%);font-variant-numeric:tabular-nums}
+.tip.on{opacity:1}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:0 18px 14px;
+  font-size:12px;color:var(--ink-2)}
+.legend .ramp{display:flex;gap:2px}
+.legend .ramp i{width:17px;height:11px;border-radius:2px}
+
+.tablescroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;
+  white-space:nowrap}
+th{font-size:11.5px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line-2)}
+th:first-child,td:first-child{text-align:left;white-space:normal;min-width:170px}
+tbody tr:last-child td{border-bottom:0}
+td.name{font-weight:500}
+.barcell{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.barcell i{height:9px;border-radius:2px;background:var(--accent);min-width:2px}
+
+.method{padding:18px}
+.method h2{margin:0 0 11px;font-family:var(--font-display);font-size:19px;font-weight:600}
+.method dl{margin:0;display:grid;gap:10px 18px;grid-template-columns:auto 1fr}
+.method dt{font-size:12.5px;font-weight:600;color:var(--muted);padding-top:1px;white-space:nowrap}
+.method dd{margin:0;font-size:13.5px;color:var(--ink-2);min-width:0}
+code{font-family:var(--font-mono);font-size:12px;background:var(--surface-2);
+  border-radius:4px;padding:1px 4px}
+footer{color:var(--muted);font-size:12.5px}
+.empty{padding:34px 18px;text-align:center;color:var(--muted);font-size:13.5px}
+
+@media (max-width:620px){
+  .method dl{grid-template-columns:1fr;gap:3px 0}
+  .method dd{margin-bottom:9px}
+}
+@media (prefers-reduced-motion: reduce){ .tip{transition:none} }
+</style>
+<!--#strip-begin-->
+</head>
+<body>
+<!--#strip-end-->
+
+<div class="wrap">
+
+  <header>
+    <h1>Drop-Off</h1>
+    <p class="lede">
+      Spotify 청취 기록에서 <strong>곡을 언제 버리는지</strong>를 봅니다. 재생 기록에는
+      곡마다 몇 밀리초를 들었는지, 왜 끝났는지, 셔플이었는지가 남습니다. 오디오 없이
+      그 흔적만으로 답할 수 있는 질문들입니다.
+    </p>
+  </header>
+
+  <div class="intake" id="intake">
+    <p id="intakeText">
+      내보내기 폴더의 <code>Streaming_History_Audio_*.json</code>을 끌어다 놓으세요.
+      브라우저 안에서만 처리되고 어디로도 전송되지 않습니다.
+    </p>
+    <div class="btnrow">
+      <span class="badge" id="srcBadge">예시 데이터</span>
+      <button type="button" class="b primary" id="pick">파일 선택</button>
+      <input type="file" id="files" accept=".json,application/json" multiple hidden>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <section class="card">
+    <div class="card-hd">
+      <h2>곡의 어느 지점에서 버리는가</h2>
+      <p class="finding" id="f-drop"></p>
+    </div>
+    <div class="plot" id="p-drop"><div class="tip" id="tip-drop"></div></div>
+  </section>
+
+  <section class="card">
+    <div class="card-hd">
+      <h2>세션이 길어지면 덜 버리는가</h2>
+      <p class="finding" id="f-pos"></p>
+    </div>
+    <div class="plot" id="p-pos"><div class="tip" id="tip-pos"></div></div>
+  </section>
+
+  <section class="card">
+    <div class="card-hd">
+      <h2>같은 곡을 반복하면 질리는가</h2>
+      <p class="finding" id="f-rep"></p>
+    </div>
+    <div class="plot" id="p-rep"><div class="tip" id="tip-rep"></div></div>
+  </section>
+
+  <section class="card">
+    <div class="card-hd">
+      <h2>시간대마다 다른가</h2>
+      <p class="finding" id="f-heat"></p>
+    </div>
+    <div class="legend" id="heatLegend"></div>
+    <div class="plot" id="p-heat"><div class="tip" id="tip-heat"></div></div>
+  </section>
+
+  <section class="card">
+    <div class="card-hd">
+      <h2>가장 오래 들은 아티스트</h2>
+      <p class="finding">재생 시간 기준입니다. 스킵률은 그 아티스트 곡을 끝까지 안 들은 비율입니다.</p>
+    </div>
+    <div class="tablescroll">
+      <table id="topTable">
+        <thead><tr>
+          <th scope="col">아티스트</th><th scope="col">시간</th>
+          <th scope="col">재생</th><th scope="col">고유곡</th><th scope="col">스킵률</th>
+        </tr></thead>
+        <tbody id="topBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card method">
+    <h2>계산 방법과 한계</h2>
+    <dl>
+      <dt>곡 길이 추정</dt>
+      <dd>내보내기에는 곡 길이가 없습니다. 그래서 <code>reason_end == "trackdone"</code>으로 끝난 재생 중 <strong>가장 긴 값</strong>을 그 곡의 길이로 봅니다. 한 번이라도 끝까지 들은 곡만 이탈 지점을 계산할 수 있고, 나머지는 제외합니다.</dd>
+      <dt>이탈 지점</dt>
+      <dd><code>ms_played / 추정길이</code>를 10% 구간으로 나눕니다. 98% 이상은 완주로 보고 빼므로, 이 그래프는 <em>중간에 그만둔 재생만</em>의 분포입니다.</dd>
+      <dt>세션</dt>
+      <dd>재생 사이 간격이 <strong>30분</strong> 넘으면 새 세션으로 끊습니다. 임의의 값이고, 10분이나 1시간으로 바꾸면 세션 수와 길이가 달라집니다.</dd>
+      <dt>스킵</dt>
+      <dd>Spotify가 붙여 주는 <code>skipped</code> 플래그를 씁니다. <code>reason_end</code>가 <code>fwdbtn</code>인 경우와 완전히 일치하지는 않습니다. 앱을 닫아 끝난 재생(<code>endplay</code>)은 스킵이 아니지만 끝까지 들은 것도 아닙니다.</dd>
+      <dt>표본 크기</dt>
+      <dd>히트맵에서 재생 수가 <strong>20회 미만</strong>인 칸은 비율이 불안정하므로 회색으로 비웁니다. 세션 위치 그래프도 표본이 30회 아래로 떨어지는 지점에서 끊습니다.</dd>
+      <dt>알 수 없는 것</dt>
+      <dd>왜 버렸는지는 기록에 없습니다. 곡이 싫어서인지, 그 순간 분위기가 아니어서인지, 전화가 와서인지 구분할 수 없습니다. 여기 있는 건 전부 <em>언제</em>에 대한 답이지 <em>왜</em>에 대한 답이 아닙니다.</dd>
+    </dl>
+  </section>
+
+  <footer>브라우저에서만 처리 · 파일은 전송되지 않습니다</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var root = document.documentElement;
+  function css(n){ return getComputedStyle(root).getPropertyValue(n).trim(); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function pct(x){ return (x*100).toFixed(1) + '%'; }
+  function nfmt(n){ return n.toLocaleString(); }
+
+  var SESSION_GAP_MS = 30*60*1000;
+  var MIN_CELL = 20, MIN_POS = 30;
+  var plays = [], isDemo = true;
+
+  /* =====================================================================
+     metrics
+     ===================================================================== */
+  function estimateDurations(rs){
+    var est = {};
+    for (var i = 0; i < rs.length; i++){
+      var r = rs[i];
+      if (r.re === 'trackdone' && r.ms > (est[r.key] || 0)) est[r.key] = r.ms;
+    }
+    return est;
+  }
+
+  function dropOff(rs, est){
+    var b = new Array(10).fill(0), done = 0, total = 0, usable = 0;
+    for (var i = 0; i < rs.length; i++){
+      var r = rs[i], L = est[r.key] || 0;
+      if (L < 30000) continue;
+      usable++;
+      var f = r.ms / L;
+      if (f >= 0.98){ done++; continue; }
+      b[Math.max(0, Math.min(9, Math.floor(f*10)))]++;
+      total++;
+    }
+    return { buckets: b, total: total, done: done, usable: usable };
+  }
+
+  function sessions(rs){
+    var out = [], cur = [];
+    for (var i = 0; i < rs.length; i++){
+      if (cur.length && rs[i].t - cur[cur.length-1].t > SESSION_GAP_MS){ out.push(cur); cur = []; }
+      cur.push(rs[i]);
+    }
+    if (cur.length) out.push(cur);
+    return out;
+  }
+
+  function byPosition(sess){
+    var sk = new Array(30).fill(0), n = new Array(30).fill(0);
+    for (var s = 0; s < sess.length; s++){
+      for (var i = 0; i < sess[s].length && i < 30; i++){
+        n[i]++;
+        if (sess[s][i].sk) sk[i]++;
+      }
+    }
+    var out = [];
+    for (var p = 0; p < 30; p++){
+      if (n[p] < MIN_POS) break;
+      out.push({ pos: p+1, rate: sk[p]/n[p], n: n[p] });
+    }
+    return out;
+  }
+
+  var REPEAT_BINS = [
+    { label:'처음', lo:0, hi:0 },
+    { label:'2–3번째', lo:1, hi:2 },
+    { label:'4–6번째', lo:3, hi:5 },
+    { label:'7–11번째', lo:6, hi:10 },
+    { label:'12번째 이상', lo:11, hi:1e9 }
+  ];
+  function repeatFatigue(rs){
+    var seen = {}, acc = REPEAT_BINS.map(function(){ return { sk:0, n:0 }; });
+    for (var i = 0; i < rs.length; i++){
+      var r = rs[i], c = seen[r.key] || 0;
+      seen[r.key] = c + 1;
+      for (var b = 0; b < REPEAT_BINS.length; b++){
+        if (c >= REPEAT_BINS[b].lo && c <= REPEAT_BINS[b].hi){
+          acc[b].n++;
+          if (r.sk) acc[b].sk++;
+          break;
+        }
+      }
+    }
+    return acc.map(function(a, i){
+      return { label: REPEAT_BINS[i].label, rate: a.n ? a.sk/a.n : 0, n: a.n };
+    });
+  }
+
+  function heatmap(rs){
+    var cells = [];
+    for (var d = 0; d < 7; d++){
+      cells.push([]);
+      for (var h = 0; h < 24; h++) cells[d].push({ n:0, sk:0 });
+    }
+    for (var i = 0; i < rs.length; i++){
+      var r = rs[i], dt = new Date(r.t);
+      var c = cells[(dt.getDay()+6)%7][dt.getHours()];
+      c.n++;
+      if (r.sk) c.sk++;
+    }
+    return cells;
+  }
+
+  function topArtists(rs, k){
+    var m = {};
+    for (var i = 0; i < rs.length; i++){
+      var r = rs[i], a = m[r.artist] || (m[r.artist] = { ms:0, n:0, sk:0, tracks:{} });
+      a.ms += r.ms; a.n++;
+      if (r.sk) a.sk++;
+      a.tracks[r.track] = 1;
+    }
+    return Object.keys(m).map(function(name){
+      var a = m[name];
+      return { name:name, hours:a.ms/3600000, n:a.n, sk:a.sk/a.n,
+               uniq:Object.keys(a.tracks).length };
+    }).sort(function(x,y){ return y.hours - x.hours; }).slice(0, k);
+  }
+
+  /* =====================================================================
+     charts
+     ===================================================================== */
+  function tipOn(tipEl, box, el, html, W, H){
+    var svg = el.ownerSVGElement, br = svg.getBoundingClientRect(), bb = box.getBoundingClientRect();
+    var bx = el.getBBox();
+    tipEl.innerHTML = html;
+    tipEl.style.left = ((bx.x + bx.width/2)/W*br.width + (br.left-bb.left)) + 'px';
+    tipEl.style.top  = (bx.y/H*br.height + (br.top-bb.top)) + 'px';
+    tipEl.classList.add('on');
+  }
+
+  function drawDrop(d){
+    var box = document.getElementById('p-drop'), tip = document.getElementById('tip-drop');
+    var W = 720, H = 260, L = 48, R = 14, T = 14, B = 46, pw = W-L-R, ph = H-T-B;
+    var line = css('--line'), muted = css('--muted'), ink2 = css('--ink-2'), acc = css('--accent');
+    if (!d.total){ box.innerHTML = '<p class="empty">완주 기록이 있는 곡이 없어 이탈 지점을 계산할 수 없습니다.</p>'; return; }
+    var max = Math.max.apply(null, d.buckets);
+    var s = ['<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="곡의 어느 지점에서 중도 이탈하는지 10% 구간별 분포">'];
+    for (var g = 0; g <= 4; g++){
+      var y = T + ph - ph*g/4, v = Math.round(max*g/4);
+      s.push('<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'" stroke="'+line+'"/>');
+      s.push('<text x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="'+muted+'">'+nfmt(v)+'</text>');
+    }
+    var bw = pw/10;
+    for (var i = 0; i < 10; i++){
+      var h = d.buckets[i]/max*ph, x = L + i*bw;
+      s.push('<rect x="'+(x+3).toFixed(1)+'" y="'+(T+ph-h).toFixed(1)+'" width="'+(bw-6).toFixed(1)+
+        '" height="'+h.toFixed(1)+'" rx="4" fill="'+acc+'" data-i="'+i+'" style="cursor:pointer"/>');
+      s.push('<text x="'+(x+bw/2).toFixed(1)+'" y="'+(T+ph+16)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="'+muted+'">'+(i*10)+'</text>');
+    }
+    s.push('<text x="'+(L+pw/2)+'" y="'+(T+ph+38)+'" text-anchor="middle" font-size="11.5" fill="'+ink2+'">곡의 진행 위치 (%)</text>');
+    s.push('</svg>');
+    box.innerHTML = s.join('') + '<div class="tip" id="tip-drop"></div>';
+    tip = document.getElementById('tip-drop');
+    [].forEach.call(box.querySelectorAll('rect[data-i]'), function(r){
+      r.addEventListener('mouseenter', function(){
+        var i = +r.dataset.i;
+        tipOn(tip, box, r, (i*10)+'–'+((i+1)*10)+'% 지점<br>'+nfmt(d.buckets[i])+'회 ('+
+          pct(d.buckets[i]/d.total)+')', W, H);
+      });
+      r.addEventListener('mouseleave', function(){ tip.classList.remove('on'); });
+    });
+  }
+
+  function drawPos(pts){
+    var box = document.getElementById('p-pos');
+    var W = 720, H = 240, L = 48, R = 14, T = 14, B = 44, pw = W-L-R, ph = H-T-B;
+    var line = css('--line'), muted = css('--muted'), ink2 = css('--ink-2'),
+        acc = css('--accent'), surface = css('--surface');
+    if (pts.length < 3){ box.innerHTML = '<p class="empty">세션이 충분하지 않습니다.</p>'; return; }
+    var hi = Math.max.apply(null, pts.map(function(p){ return p.rate; }))*1.15;
+    function X(i){ return L + (pts.length === 1 ? pw/2 : i/(pts.length-1)*pw); }
+    function Y(v){ return T + ph - v/hi*ph; }
+    var s = ['<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="세션 내 몇 번째 곡인지에 따른 스킵률">'];
+    for (var g = 0; g <= 4; g++){
+      var y = T + ph - ph*g/4;
+      s.push('<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'" stroke="'+line+'"/>');
+      s.push('<text x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="'+muted+'">'+(hi*g/4*100).toFixed(0)+'%</text>');
+    }
+    s.push('<polyline points="'+pts.map(function(p,i){ return X(i).toFixed(1)+','+Y(p.rate).toFixed(1); }).join(' ')+
+      '" fill="none" stroke="'+acc+'" stroke-width="2" stroke-linejoin="round"/>');
+    pts.forEach(function(p,i){
+      s.push('<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(p.rate).toFixed(1)+'" r="4.5" fill="'+acc+
+        '" stroke="'+surface+'" stroke-width="2" data-i="'+i+'" style="cursor:pointer"/>');
+      if (i % 2 === 0 || i === pts.length-1)
+        s.push('<text x="'+X(i).toFixed(1)+'" y="'+(T+ph+16)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="'+muted+'">'+p.pos+'</text>');
+    });
+    s.push('<text x="'+(L+pw/2)+'" y="'+(T+ph+36)+'" text-anchor="middle" font-size="11.5" fill="'+ink2+'">세션 내 몇 번째 곡</text>');
+    s.push('</svg>');
+    box.innerHTML = s.join('') + '<div class="tip" id="tip-pos"></div>';
+    var tip = document.getElementById('tip-pos');
+    [].forEach.call(box.querySelectorAll('circle[data-i]'), function(c){
+      c.addEventListener('mouseenter', function(){
+        var p = pts[+c.dataset.i];
+        tipOn(tip, box, c, p.pos+'번째 곡<br>스킵률 '+pct(p.rate)+'<br>n='+nfmt(p.n), W, H);
+      });
+      c.addEventListener('mouseleave', function(){ tip.classList.remove('on'); });
+    });
+  }
+
+  function drawRep(bins){
+    var box = document.getElementById('p-rep');
+    var W = 720, H = 230, L = 48, R = 14, T = 14, B = 44, pw = W-L-R, ph = H-T-B;
+    var line = css('--line'), muted = css('--muted'), acc = css('--accent');
+    var live = bins.filter(function(b){ return b.n >= MIN_POS; });
+    if (!live.length){ box.innerHTML = '<p class="empty">재생이 충분하지 않습니다.</p>'; return; }
+    var hi = Math.max.apply(null, live.map(function(b){ return b.rate; }))*1.2;
+    var s = ['<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="같은 곡을 몇 번째 듣는지에 따른 스킵률">'];
+    for (var g = 0; g <= 4; g++){
+      var y = T + ph - ph*g/4;
+      s.push('<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'" stroke="'+line+'"/>');
+      s.push('<text x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="'+muted+'">'+(hi*g/4*100).toFixed(0)+'%</text>');
+    }
+    var bw = pw/live.length;
+    live.forEach(function(b,i){
+      var h = b.rate/hi*ph, x = L + i*bw;
+      s.push('<rect x="'+(x+10).toFixed(1)+'" y="'+(T+ph-h).toFixed(1)+'" width="'+(bw-20).toFixed(1)+
+        '" height="'+h.toFixed(1)+'" rx="4" fill="'+acc+'" data-i="'+i+'" style="cursor:pointer"/>');
+      s.push('<text x="'+(x+bw/2).toFixed(1)+'" y="'+(T+ph+17)+'" text-anchor="middle" font-size="11.5" fill="'+muted+'">'+esc(b.label)+'</text>');
+      s.push('<text x="'+(x+bw/2).toFixed(1)+'" y="'+(T+ph-h-7).toFixed(1)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="'+acc+'">'+pct(b.rate)+'</text>');
+    });
+    s.push('</svg>');
+    box.innerHTML = s.join('') + '<div class="tip" id="tip-rep"></div>';
+    var tip = document.getElementById('tip-rep');
+    [].forEach.call(box.querySelectorAll('rect[data-i]'), function(r){
+      r.addEventListener('mouseenter', function(){
+        var b = live[+r.dataset.i];
+        tipOn(tip, box, r, esc(b.label)+'<br>스킵률 '+pct(b.rate)+'<br>n='+nfmt(b.n), W, H);
+      });
+      r.addEventListener('mouseleave', function(){ tip.classList.remove('on'); });
+    });
+  }
+
+  var DAYS = ['월','화','수','목','금','토','일'];
+  function drawHeat(cells){
+    var box = document.getElementById('p-heat');
+    var W = 720, H = 212, L = 34, R = 10, T = 18, B = 26;
+    var cw = (W-L-R)/24, chh = (H-T-B)/7;
+    var muted = css('--muted'), surface2 = css('--surface-2'), surface = css('--surface');
+    var ramp = [css('--h1'), css('--h2'), css('--h3'), css('--h4'), css('--h5')];
+    var rates = [];
+    cells.forEach(function(row){ row.forEach(function(c){ if (c.n >= MIN_CELL) rates.push(c.sk/c.n); }); });
+    if (!rates.length){ box.innerHTML = '<p class="empty">시간대별로 나눌 만큼 재생이 많지 않습니다.</p>'; return; }
+    var lo = Math.min.apply(null, rates), hi = Math.max.apply(null, rates);
+    if (hi - lo < 1e-6) hi = lo + 1e-6;
+    function colorOf(v){ return ramp[Math.max(0, Math.min(4, Math.floor((v-lo)/(hi-lo)*5)))]; }
+    var s = ['<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="요일과 시간대별 스킵률 히트맵">'];
+    for (var h = 0; h < 24; h += 3)
+      s.push('<text x="'+(L+h*cw+cw/2).toFixed(1)+'" y="'+(T-6)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="'+muted+'">'+h+'</text>');
+    for (var d = 0; d < 7; d++){
+      s.push('<text x="'+(L-7)+'" y="'+(T+d*chh+chh/2+3.5).toFixed(1)+'" text-anchor="end" font-size="11" fill="'+muted+'">'+DAYS[d]+'</text>');
+      for (var hh = 0; hh < 24; hh++){
+        var c = cells[d][hh], enough = c.n >= MIN_CELL;
+        var fill = enough ? colorOf(c.sk/c.n) : surface2;
+        s.push('<rect x="'+(L+hh*cw).toFixed(1)+'" y="'+(T+d*chh).toFixed(1)+'" width="'+(cw-1.6).toFixed(1)+
+          '" height="'+(chh-1.6).toFixed(1)+'" rx="2" fill="'+fill+'" stroke="'+surface+'" stroke-width="0.5" data-d="'+d+'" data-h="'+hh+'" style="cursor:pointer"/>');
+      }
+    }
+    s.push('<text x="'+(L+(W-L-R)/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="11.5" fill="'+muted+'">시 (0–23)</text>');
+    s.push('</svg>');
+    box.innerHTML = s.join('') + '<div class="tip" id="tip-heat"></div>';
+    document.getElementById('heatLegend').innerHTML =
+      '<span>스킵률 낮음</span><span class="ramp">' + ramp.map(function(c){
+        return '<i style="background:'+c+'"></i>'; }).join('') + '</span><span>높음</span>' +
+      '<span style="color:var(--muted)">· ' + pct(lo) + '–' + pct(hi) +
+      ' · 재생 ' + MIN_CELL + '회 미만인 칸은 비움</span>';
+    var tip = document.getElementById('tip-heat');
+    [].forEach.call(box.querySelectorAll('rect[data-d]'), function(r){
+      r.addEventListener('mouseenter', function(){
+        var c = cells[+r.dataset.d][+r.dataset.h];
+        tipOn(tip, box, r, DAYS[+r.dataset.d]+'요일 '+r.dataset.h+'시<br>' +
+          (c.n >= MIN_CELL ? '스킵률 '+pct(c.sk/c.n) : '표본 부족') +
+          '<br>재생 '+nfmt(c.n)+'회', W, H);
+      });
+      r.addEventListener('mouseleave', function(){ tip.classList.remove('on'); });
+    });
+  }
+
+  function drawTop(list){
+    var tb = document.getElementById('topBody');
+    if (!list.length){ tb.innerHTML = '<tr><td colspan="5">데이터 없음</td></tr>'; return; }
+    var max = list[0].hours;
+    tb.innerHTML = list.map(function(a){
+      return '<tr><td class="name">' + esc(a.name) + '</td>' +
+        '<td><div class="barcell"><i style="width:' + (a.hours/max*54 + 4).toFixed(0) + 'px"></i>' +
+        a.hours.toFixed(1) + '</div></td>' +
+        '<td>' + nfmt(a.n) + '</td><td>' + nfmt(a.uniq) + '</td>' +
+        '<td>' + pct(a.sk) + '</td></tr>';
+    }).join('');
+  }
+
+  /* =====================================================================
+     render
+     ===================================================================== */
+  function render(){
+    var est = estimateDurations(plays);
+    var d = dropOff(plays, est);
+    var sess = sessions(plays);
+    var pos = byPosition(sess);
+    var rep = repeatFatigue(plays);
+    var cells = heatmap(plays);
+    var hours = plays.reduce(function(a,r){ return a + r.ms; }, 0)/3600000;
+    var tracks = {}, artists = {}, skipped = 0;
+    plays.forEach(function(r){ tracks[r.key] = 1; artists[r.artist] = 1; if (r.sk) skipped++; });
+
+    document.getElementById('stats').innerHTML = [
+      ['재생', nfmt(plays.length), ''],
+      ['청취 시간', Math.round(hours).toLocaleString(), '시간'],
+      ['고유 곡', nfmt(Object.keys(tracks).length), ''],
+      ['아티스트', nfmt(Object.keys(artists).length), ''],
+      ['스킵률', pct(skipped/Math.max(1, plays.length)), ''],
+      ['세션', nfmt(sess.length), '']
+    ].map(function(x){
+      return '<div class="stat"><div class="k">'+x[0]+'</div><div class="v">'+x[1]+
+             (x[2] ? '<small>'+x[2]+'</small>' : '')+'</div></div>';
+    }).join('');
+
+    var first = d.buckets[0]/Math.max(1,d.total), last = d.buckets[9]/Math.max(1,d.total);
+    document.getElementById('f-drop').innerHTML =
+      '중도 이탈 ' + nfmt(d.total) + '회 중 <b>' + pct(first) + '가 첫 10% 안에서</b>, <b>' +
+      pct(last) + '가 마지막 10%에서</b> 끊겼습니다. 가운데는 얕습니다. ' +
+      '곡을 버리는 방식이 두 가지라는 뜻입니다 — 시작하자마자 아니라고 판단하거나, 거의 다 듣고 아웃트로를 건너뜁니다. ' +
+      '완주 ' + nfmt(d.done) + '회는 제외했습니다.';
+
+    if (pos.length >= 3){
+      var peak = pos.reduce(function(a,b){ return b.rate > a.rate ? b : a; });
+      var lastP = pos[pos.length-1];
+      document.getElementById('f-pos').innerHTML =
+        '<b>' + peak.pos + '번째 곡에서 ' + pct(peak.rate) + '로 가장 높고</b>, ' +
+        lastP.pos + '번째에는 ' + pct(lastP.rate) + '까지 내려갑니다. ' +
+        '세션 초반에 들을 것을 고르고, 자리를 잡으면 덜 건너뜁니다.';
+    } else document.getElementById('f-pos').textContent = '';
+
+    var r0 = rep[0], rLast = rep.filter(function(b){ return b.n >= MIN_POS; }).pop();
+    if (r0 && rLast){
+      var dir = rLast.rate > r0.rate ? '높습니다' : '낮습니다';
+      document.getElementById('f-rep').innerHTML =
+        '처음 듣는 곡의 스킵률은 <b>' + pct(r0.rate) + '</b>, 여러 번 들은 곡은 <b>' + pct(rLast.rate) +
+        '</b>로 ' + dir + '. 처음 한 번은 끝까지 들어보고, 아는 곡은 원하는 부분만 듣고 넘기는 패턴입니다.';
+    }
+
+    var allRates = [];
+    cells.forEach(function(row){ row.forEach(function(c){ if (c.n >= MIN_CELL) allRates.push({ r:c.sk/c.n, n:c.n }); }); });
+    if (allRates.length){
+      var mx = allRates.reduce(function(a,b){ return b.r > a.r ? b : a; });
+      var mn = allRates.reduce(function(a,b){ return b.r < a.r ? b : a; });
+      document.getElementById('f-heat').innerHTML =
+        '표본이 충분한 칸만 보면 스킵률이 <b>' + pct(mn.r) + '에서 ' + pct(mx.r) + '까지</b> 벌어집니다. ' +
+        '시간대 차이가 곡 선택만큼 크지는 않습니다.';
+    }
+
+    drawDrop(d); drawPos(pos); drawRep(rep); drawHeat(cells); drawTop(topArtists(plays, 12));
+
+    document.getElementById('srcBadge').textContent = isDemo ? '예시 데이터' : '내 기록';
+    document.getElementById('srcBadge').style.opacity = isDemo ? '1' : '0.55';
+  }
+
+  /* =====================================================================
+     intake
+     ===================================================================== */
+  function ingest(list){
+    var files = [].slice.call(list).filter(function(f){ return /\.json$/i.test(f.name); });
+    if (!files.length){ document.getElementById('intakeText').textContent =
+      'JSON 파일을 찾지 못했습니다. Streaming_History_Audio_*.json 을 올려 주세요.'; return; }
+    var out = [], left = files.length, bad = 0;
+    document.getElementById('intakeText').textContent = files.length + '개 파일 읽는 중…';
+    files.forEach(function(f){
+      var fr = new FileReader();
+      fr.onload = function(){
+        try {
+          var arr = JSON.parse(fr.result);
+          if (Array.isArray(arr)) arr.forEach(function(r){
+            var name = r.master_metadata_track_name;
+            if (!name || !r.ts) return;
+            out.push({
+              t: Date.parse(r.ts),
+              artist: r.master_metadata_album_artist_name || '(unknown)',
+              track: name,
+              key: (r.master_metadata_album_artist_name || '') + '\u0000' + name,
+              ms: r.ms_played || 0,
+              sk: !!r.skipped,
+              re: r.reason_end || ''
+            });
+          });
+        } catch (e){ bad++; }
+        if (--left === 0) finish(out, bad, files.length);
+      };
+      fr.onerror = function(){ bad++; if (--left === 0) finish(out, bad, files.length); };
+      fr.readAsText(f);
+    });
+  }
+  function finish(out, bad, total){
+    if (!out.length){
+      document.getElementById('intakeText').textContent =
+        '재생 기록을 찾지 못했습니다. Streaming_History_Audio_*.json 인지 확인해 주세요.';
+      return;
+    }
+    out.sort(function(a,b){ return a.t - b.t; });
+    plays = out;
+    isDemo = false;
+    var from = new Date(out[0].t), to = new Date(out[out.length-1].t);
+    document.getElementById('intakeText').innerHTML =
+      '<b>' + nfmt(out.length) + '회 재생</b> · ' +
+      from.toISOString().slice(0,10) + ' ~ ' + to.toISOString().slice(0,10) +
+      (bad ? ' · ' + bad + '/' + total + '개 파일을 읽지 못했습니다' : '');
+    render();
+  }
+
+  var filesIn = document.getElementById('files');
+  document.getElementById('pick').addEventListener('click', function(){ filesIn.click(); });
+  filesIn.addEventListener('change', function(){ ingest(filesIn.files); });
+  var intake = document.getElementById('intake');
+  ['dragenter','dragover'].forEach(function(t){
+    intake.addEventListener(t, function(e){ e.preventDefault(); intake.classList.add('dragover'); });
+  });
+  ['dragleave','drop'].forEach(function(t){
+    intake.addEventListener(t, function(e){ e.preventDefault(); intake.classList.remove('dragover'); });
+  });
+  intake.addEventListener('drop', function(e){
+    if (e.dataTransfer && e.dataTransfer.files) ingest(e.dataTransfer.files);
+  });
+
+  /* =====================================================================
+     example data — synthetic, so the page shows its work before any upload
+     ===================================================================== */
+  function makeDemo(){
+    var rnd = (function(s){ return function(){ s = (s*1664525 + 1013904223) >>> 0; return s/4294967296; }; })(7);
+    var artists = ['Marrow Lane','Kestrel','The Paper Tigers','Soft Opening','Ruth Ellery',
+                   'Blue Yard','Novena','Tall Grass','Halcyon Bros','Ever After',
+                   'Cold Apartment','Juniper Sound'];
+    var pool = [];
+    for (var a = 0; a < artists.length; a++){
+      var count = 4 + Math.floor(rnd()*10);
+      for (var i = 0; i < count; i++)
+        pool.push({ artist: artists[a], track: 'Track ' + (i+1),
+                    dur: 150000 + Math.floor(rnd()*140000), pop: 1/(1 + a*0.6 + i*0.25) });
+    }
+    var weights = pool.map(function(p){ return p.pop; });
+    var wsum = weights.reduce(function(x,y){ return x+y; }, 0);
+    function pickTrack(){
+      var r = rnd()*wsum, acc = 0;
+      for (var i = 0; i < pool.length; i++){ acc += weights[i]; if (r <= acc) return pool[i]; }
+      return pool[pool.length-1];
+    }
+    var out = [], seen = {};
+    var t = Date.UTC(2025, 4, 17, 9, 0, 0);
+    var end = Date.UTC(2026, 9, 8, 18, 0, 0);
+    while (t < end){
+      var len = 3 + Math.floor(Math.pow(rnd(), 1.7)*26);
+      var hour = new Date(t).getHours();
+      var mood = (hour >= 1 && hour < 7) ? 0.82 : 1.0;
+      for (var p = 0; p < len && t < end; p++){
+        var tr = pickTrack();
+        var k = tr.artist + '\u0000' + tr.track;
+        var c = seen[k] || 0;
+        seen[k] = c + 1;
+        var pSkip = 0.30 * mood;
+        pSkip *= (p < 4) ? 1.25 - p*0.04 : 0.78 - Math.min(0.28, p*0.008);
+        pSkip *= (c === 0) ? 0.78 : 1.0;
+        var skipped = rnd() < pSkip;
+        var ms, re;
+        if (skipped){
+          /* three ways to bail: reject at once, drift off mid-track, or skip the
+             outro. The middle component keeps the valley shallow rather than empty. */
+          var u = rnd();
+          ms = u < 0.40 ? Math.floor(tr.dur*rnd()*0.09)
+             : u < 0.58 ? Math.floor(tr.dur*(0.09 + rnd()*0.46))
+                        : Math.floor(tr.dur*(0.55 + rnd()*0.43));
+          re = 'fwdbtn';
+        } else {
+          ms = tr.dur; re = 'trackdone';
+        }
+        out.push({ t:t, artist:tr.artist, track:tr.track, key:k, ms:ms, sk:skipped, re:re });
+        t += ms + 500;
+      }
+      t += (12 + Math.floor(rnd()*600))*60*1000;
+    }
+    return out;
+  }
+
+  if (window.matchMedia){
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    var onTheme = function(){ render(); };
+    if (mq.addEventListener) mq.addEventListener('change', onTheme);
+    else if (mq.addListener) mq.addListener(onTheme);
+  }
+  window.addEventListener('resize', function(){ render(); });
+
+  plays = makeDemo();
+  render();
+})();
+</script>
+<!--#strip-begin-->
+</body>
+</html>
+<!--#strip-end-->

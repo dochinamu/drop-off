@@ -1,0 +1,5 @@
+# Personal listening history never belongs in the repo.
+Streaming_History_*.json
+*.json
+Spotify*/
+.DS_Store
