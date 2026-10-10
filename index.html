@@ -188,6 +188,15 @@ footer{color:var(--muted);font-size:12.5px}
 
   <section class="card">
     <div class="card-hd">
+      <h2>다른 사람들과 비교하면</h2>
+      <p class="finding" id="f-cmp"></p>
+    </div>
+    <div class="legend" id="cmpLegend"></div>
+    <div class="plot" id="p-cmp"><div class="tip" id="tip-cmp"></div></div>
+  </section>
+
+  <section class="card">
+    <div class="card-hd">
       <h2>시간대마다 다른가</h2>
       <p class="finding" id="f-heat"></p>
     </div>
@@ -224,6 +233,10 @@ footer{color:var(--muted);font-size:12.5px}
       <dd>Spotify가 붙여 주는 <code>skipped</code> 플래그를 씁니다. <code>reason_end</code>가 <code>fwdbtn</code>인 경우와 완전히 일치하지는 않습니다. 앱을 닫아 끝난 재생(<code>endplay</code>)은 스킵이 아니지만 끝까지 들은 것도 아닙니다.</dd>
       <dt>표본 크기</dt>
       <dd>히트맵에서 재생 수가 <strong>20회 미만</strong>인 칸은 비율이 불안정하므로 회색으로 비웁니다. 세션 위치 그래프도 표본이 30회 아래로 떨어지는 지점에서 끊습니다.</dd>
+      <dt>비교 기준</dt>
+      <dd>ListenBrainz가 공개하는 증분 덤프(CC0) 하루치에서 뽑았습니다. 537만 건·이용자 25,640명 중 50회 이상 기록한 <strong>7,539명</strong>이 대상입니다. 지표를 사람별로 먼저 계산한 뒤 사람 사이에서 요약했으므로, 평생치를 한 번에 올린 소수가 전체를 끌고 가지 않습니다.</dd>
+      <dt>비교하지 않은 것</dt>
+      <dd>재청취 비율과 시간대는 비교에서 뺐습니다. 덤프에 담긴 이용자 대부분은 관측 기간이 하루 남짓이라 수개월치 기록과 같은 축에 놓을 수 없고, 시간대는 전 세계 이용자가 섞인 UTC라 한 사람의 생활 시간과 의미가 다릅니다. 세션 길이·곡 간격·아티스트 연속성은 세션 안에서 닫히는 지표라 비교가 성립합니다.</dd>
       <dt>알 수 없는 것</dt>
       <dd>왜 버렸는지는 기록에 없습니다. 곡이 싫어서인지, 그 순간 분위기가 아니어서인지, 전화가 와서인지 구분할 수 없습니다. 여기 있는 건 전부 <em>언제</em>에 대한 답이지 <em>왜</em>에 대한 답이 아닙니다.</dd>
     </dl>
@@ -526,6 +539,101 @@ footer{color:var(--muted);font-size:12.5px}
     }).join('');
   }
 
+
+  /* Reference population: ListenBrainz public incremental dump (CC0), one day of
+     submissions. Metrics computed per user first, then summarised across users, so
+     a single bulk importer cannot dominate. Only users with 50+ listens included. */
+  var LB_POP = {"users": 7539, "sessionLen": [9, 18, 46], "gapSec": [145, 203, 259], "stick": [0.4544, 0.4051, 0.4509, 0.4101, 0.4547, 0.4129, 0.4563, 0.4129, 0.4548, 0.4067, 0.4419, 0.4023, 0.4486, 0.4074]};
+
+  function stickiness(sess){
+    var num = new Array(20).fill(0), den = new Array(20).fill(0);
+    for (var s = 0; s < sess.length; s++){
+      var w = 1/sess.length;
+      for (var i = 0; i < sess[s].length-1 && i < 20; i++){
+        den[i] += w;
+        if (sess[s][i].artist === sess[s][i+1].artist) num[i] += w;
+      }
+    }
+    return num.map(function(v,i){ return den[i] > 0 ? v/den[i] : null; });
+  }
+
+  function medianOf(a){
+    if (!a.length) return 0;
+    var b = a.slice().sort(function(x,y){ return x-y; });
+    return b[b.length>>1];
+  }
+
+  function drawCompare(sess){
+    var box = document.getElementById('p-cmp');
+    var W = 720, H = 250, L = 48, R = 14, T = 14, B = 44, pw = W-L-R, ph = H-T-B;
+    var line = css('--line'), muted = css('--muted'), ink2 = css('--ink-2'),
+        acc = css('--accent'), surface = css('--surface');
+    var mine = stickiness(sess), pop = LB_POP.stick;
+    var N = 12;
+    var vals = [];
+    for (var i = 0; i < N; i++){
+      if (mine[i] != null) vals.push(mine[i]);
+      if (pop[i] != null) vals.push(pop[i]);
+    }
+    if (vals.length < 4){ box.innerHTML = '<p class="empty">세션이 충분하지 않습니다.</p>'; return; }
+    var hi = Math.max.apply(null, vals)*1.2;
+    function X(i){ return L + i/(N-1)*pw; }
+    function Y(v){ return T + ph - v/hi*ph; }
+    function path(arr, color, dash){
+      var pts = [];
+      for (var i = 0; i < N; i++) if (arr[i] != null) pts.push(X(i).toFixed(1)+','+Y(arr[i]).toFixed(1));
+      if (pts.length < 2) return '';
+      return '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+color+
+        '" stroke-width="2" stroke-linejoin="round"'+(dash ? ' stroke-dasharray="5 4"' : '')+'/>';
+    }
+    var s = ['<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="세션 내 위치별로 같은 아티스트가 연속할 확률, 내 기록과 ListenBrainz 이용자 비교">'];
+    for (var g = 0; g <= 4; g++){
+      var y = T + ph - ph*g/4;
+      s.push('<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'" stroke="'+line+'"/>');
+      s.push('<text x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="'+muted+'">'+(hi*g/4*100).toFixed(0)+'%</text>');
+    }
+    s.push(path(pop, ink2, true));
+    s.push(path(mine, acc, false));
+    for (var i = 0; i < N; i++){
+      if (mine[i] == null) continue;
+      s.push('<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(mine[i]).toFixed(1)+'" r="4" fill="'+acc+
+        '" stroke="'+surface+'" stroke-width="1.5" data-i="'+i+'" style="cursor:pointer"/>');
+      if (i % 2 === 0)
+        s.push('<text x="'+X(i).toFixed(1)+'" y="'+(T+ph+16)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="'+muted+'">'+(i+1)+'</text>');
+    }
+    s.push('<text x="'+(L+pw/2)+'" y="'+(T+ph+36)+'" text-anchor="middle" font-size="11.5" fill="'+ink2+'">세션 내 몇 번째 곡에서 다음 곡으로</text>');
+    s.push('</svg>');
+    box.innerHTML = s.join('') + '<div class="tip" id="tip-cmp"></div>';
+    document.getElementById('cmpLegend').innerHTML =
+      '<span><i style="display:inline-block;width:16px;height:3px;background:'+acc+'"></i> 내 기록</span>' +
+      '<span><i style="display:inline-block;width:16px;height:3px;background:'+ink2+
+      ';opacity:.8"></i> ListenBrainz 이용자 '+nfmt(LB_POP.users)+'명</span>';
+    var tip = document.getElementById('tip-cmp');
+    [].forEach.call(box.querySelectorAll('circle[data-i]'), function(c){
+      c.addEventListener('mouseenter', function(){
+        var i = +c.dataset.i;
+        tipOn(tip, box, c, (i+1)+'번째 → 다음<br>내 기록 '+pct(mine[i])+
+          (pop[i] != null ? '<br>모집단 '+pct(pop[i]) : ''), W, H);
+      });
+      c.addEventListener('mouseleave', function(){ tip.classList.remove('on'); });
+    });
+
+    var myLens = sess.map(function(x){ return x.length; });
+    var myGaps = [];
+    sess.forEach(function(x){ for (var i = 1; i < x.length; i++) myGaps.push((x[i].t - x[i-1].t)/1000); });
+    var myStick = mine.slice(1, 8).filter(function(v){ return v != null; });
+    var myAvg = myStick.length ? myStick.reduce(function(a,b){ return a+b; },0)/myStick.length : 0;
+    var popAvg = pop.slice(1, 8).filter(function(v){ return v != null; });
+    popAvg = popAvg.reduce(function(a,b){ return a+b; },0)/Math.max(1, popAvg.length);
+    document.getElementById('f-cmp').innerHTML =
+      '같은 아티스트를 연달아 듣는 비율이 <b>' + pct(myAvg) + ' 대 ' + pct(popAvg) +
+      '</b>입니다. 앨범을 통째로 듣는 사람이 많은 쪽과 달리, 이 기록은 곡마다 아티스트가 바뀝니다. ' +
+      '플레이리스트 중심 청취의 흔적입니다.<br>' +
+      '세션 길이 중앙값 <b>' + medianOf(myLens) + '곡</b> (모집단 ' + LB_POP.sessionLen[1] +
+      '곡, 사분위 ' + LB_POP.sessionLen[0] + '–' + LB_POP.sessionLen[2] + '). ' +
+      '곡 사이 간격 <b>' + Math.round(medianOf(myGaps)) + '초</b> (모집단 ' + LB_POP.gapSec[1] + '초).';
+  }
+
   /* =====================================================================
      render
      ===================================================================== */
@@ -586,7 +694,8 @@ footer{color:var(--muted);font-size:12.5px}
         '시간대 차이가 곡 선택만큼 크지는 않습니다.';
     }
 
-    drawDrop(d); drawPos(pos); drawRep(rep); drawHeat(cells); drawTop(topArtists(plays, 12));
+    drawDrop(d); drawPos(pos); drawRep(rep); drawCompare(sess);
+    drawHeat(cells); drawTop(topArtists(plays, 12));
 
     document.getElementById('srcBadge').textContent = isDemo ? '예시 데이터' : '내 기록';
     document.getElementById('srcBadge').style.opacity = isDemo ? '1' : '0.55';
